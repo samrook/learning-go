@@ -21,25 +21,25 @@ func DefaultConfig() Config {
 	}
 }
 
-func Register(mux *http.ServeMux, cfg Config) {
-	mux.Handle("/api/artist-bio", delayHandler(cfg.ArtistBioDelay, func(w http.ResponseWriter, r *http.Request) any {
+func Register(serverMux *http.ServeMux, cfg Config) {
+	serverMux.Handle("/api/artist-bio", delayHandler(cfg.ArtistBioDelay, func(responseWriter http.ResponseWriter, request *http.Request) any {
 		return map[string]any{"artist": "The Go Gophers", "bio": "A totally real band used for demo data."}
 	}))
 
-	mux.Handle("/api/current-song", delayHandler(cfg.CurrentSongDelay, func(w http.ResponseWriter, r *http.Request) any {
+	serverMux.Handle("/api/current-song", delayHandler(cfg.CurrentSongDelay, func(responseWriter http.ResponseWriter, request *http.Request) any {
 		return map[string]any{"artist": "The Go Gophers", "title": "Context Switching Blues"}
 	}))
 
-	mux.Handle("/api/album-art", delayHandler(cfg.AlbumArtDelay, func(w http.ResponseWriter, r *http.Request) any {
+	serverMux.Handle("/api/album-art", delayHandler(cfg.AlbumArtDelay, func(responseWriter http.ResponseWriter, request *http.Request) any {
 		return map[string]any{"url": "https://example.com/album-art.png"}
 	}))
 }
 
-func delayHandler(defaultDelay time.Duration, payload func(w http.ResponseWriter, r *http.Request) any) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func delayHandler(defaultDelay time.Duration, payload func(responseWriter http.ResponseWriter, request *http.Request) any) http.Handler {
+	return http.HandlerFunc(func(responseWriter http.ResponseWriter, request *http.Request) {
 		delay := defaultDelay
-		if q := r.URL.Query().Get("delay_ms"); q != "" {
-			if ms, err := strconv.Atoi(q); err == nil && ms >= 0 {
+		if query := request.URL.Query().Get("delay_ms"); query != "" {
+			if ms, err := strconv.Atoi(query); err == nil && ms >= 0 {
 				delay = time.Duration(ms) * time.Millisecond
 			}
 		}
@@ -48,12 +48,12 @@ func delayHandler(defaultDelay time.Duration, payload func(w http.ResponseWriter
 		defer timer.Stop()
 
 		select {
-		case <-r.Context().Done():
+		case <-request.Context().Done():
 			return
 		case <-timer.C:
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(payload(w, r))
+		responseWriter.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(responseWriter).Encode(payload(responseWriter, request))
 	})
 }

@@ -24,22 +24,22 @@ func NewClient(baseURL string) *Client {
 }
 
 func (c *Client) getJSON(ctx context.Context, path string, out any) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+path, nil)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, c.BaseURL+path, nil)
 	if err != nil {
 		return err
 	}
 
-	resp, err := c.HTTP.Do(req)
+	response, err := c.HTTP.Do(request)
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer response.Body.Close()
 
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("unexpected status %s", resp.Status)
+	if response.StatusCode < 200 || response.StatusCode >= 300 {
+		return fmt.Errorf("unexpected status %s", response.Status)
 	}
 
-	return json.NewDecoder(resp.Body).Decode(out)
+	return json.NewDecoder(response.Body).Decode(out)
 }
 
 func (c *Client) ArtistBio(ctx context.Context) (ArtistBio, error) {

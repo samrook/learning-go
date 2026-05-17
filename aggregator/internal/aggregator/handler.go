@@ -24,67 +24,67 @@ func NewHandler(client *Client) *Handler {
 	}
 }
 
-func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	parentCtx := r.Context()
+func (h *Handler) ServeHTTP(responseWriter http.ResponseWriter, request *http.Request) {
+	parentCtx := request.Context()
 
 	var (
-		result Response
-		mu     sync.Mutex
-		wg     sync.WaitGroup
-		errCh  = make(chan error, 3)
+		result    Response
+		mu        sync.Mutex
+		waitGroup sync.WaitGroup
+		errCh     = make(chan error, 3)
 	)
 
-	wg.Add(3)
+	waitGroup.Add(3)
 
 	go func() {
-		defer wg.Done()
+		defer waitGroup.Done()
 		ctx, cancel := context.WithTimeout(parentCtx, h.DefaultTimeout)
 		defer cancel()
 
-		val, err := h.Client.ArtistBio(ctx)
+		artistBio, err := h.Client.ArtistBio(ctx)
 		if err != nil {
 			errCh <- wrapErr("artist_bio", err)
 			return
 		}
 
 		mu.Lock()
-		result.ArtistBio = &val
+		result.ArtistBio = &artistBio
 		mu.Unlock()
 	}()
 
 	go func() {
-		defer wg.Done()
+		defer waitGroup.Done()
 		ctx, cancel := context.WithTimeout(parentCtx, h.DefaultTimeout)
 		defer cancel()
 
-		val, err := h.Client.CurrentSong(ctx)
+		currentSong, err := h.Client.CurrentSong(ctx)
 		if err != nil {
 			errCh <- wrapErr("current_song", err)
 			return
 		}
 
 		mu.Lock()
-		result.CurrentSong = &val
+		result.CurrentSong = &currentSong
 		mu.Unlock()
 	}()
 
 	go func() {
-		defer wg.Done()
+		defer waitGroup.Done()
 		ctx, cancel := context.WithTimeout(parentCtx, h.AlbumArtTimeout)
 		defer cancel()
 
-		val, err := h.Client.AlbumArt(ctx)
+		albumArt, err := h.Client.AlbumArt(ctx)
 		if err != nil {
 			errCh <- wrapErr("album_art", err)
 			return
 		}
 
 		mu.Lock()
-		result.AlbumArt = &val
+		result.AlbumArt = &albumArt
 		mu.Unlock()
 	}()
 
-	wg.Wait()
+	waitGroup.Wait()
 	close(errCh)
 
 	for err := range errCh {
@@ -99,9 +99,9 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		status = http.StatusBadGateway
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(result)
+	responseWriter.Header().Set("Content-Type", "application/json")
+	responseWriter.WriteHeader(status)
+	_ = json.NewEncoder(responseWriter).Encode(result)
 }
 
 func wrapErr(component string, err error) error {

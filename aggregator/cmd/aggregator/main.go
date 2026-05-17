@@ -28,15 +28,15 @@ func main() {
 		derivedBaseURL = "http://" + net.JoinHostPort(host, port)
 	}
 
-	mux := http.NewServeMux()
-	apisim.Register(mux, apisim.DefaultConfig())
+	serverMux := http.NewServeMux()
+	apisim.Register(serverMux, apisim.DefaultConfig())
 
 	client := aggregator.NewClient(derivedBaseURL)
-	mux.Handle("/aggregate", aggregator.NewHandler(client))
+	serverMux.Handle("/aggregate", aggregator.NewHandler(client))
 
 	log.Printf("listening on %s", *addr)
 	log.Printf("downstreams at %s", derivedBaseURL)
-	log.Fatal(http.ListenAndServe(*addr, mux))
+	log.Fatal(http.ListenAndServe(*addr, serverMux))
 }
 
 func splitAddr(addr string) (host string, port string, err error) {
