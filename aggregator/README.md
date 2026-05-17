@@ -9,7 +9,7 @@ Small Go service that demonstrates a common “API aggregator” pattern: fetch 
   - `GET /api/artist-bio`
   - `GET /api/current-song`
   - `GET /api/album-art`
-- Uses a shorter timeout for Album Art (default `500ms`). If it’s slow, the request is canceled and the response still returns the other data.
+- Uses a default timeout of `500ms`
 
 ## Run
 
@@ -24,7 +24,7 @@ In another terminal:
 curl -s http://127.0.0.1:8080/aggregate | jq .
 ```
 
-By default, `album_art` is intentionally slow (700ms), so you’ll see `artist_bio` + `current_song` with an `errors` entry for album art timing out.
+By default, `album_art` is intentionally slow (`700ms`), so you’ll see `artist_bio` + `current_song` with an `errors` entry for album art timing out.
 
 ## Configuration
 
